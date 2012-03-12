@@ -35,6 +35,11 @@ end
 
 y = zeros(1, (frameCount-1)*increment + winLength);
 c = zeros(1, (frameCount-1)*increment + winLength);
+% jorgeh: The previous 2 lines should be replaced with the following 2
+% lines if we make the change prposed at line 14 in ComplexSpectrum.m
+% y = zeros(1, frameCount*increment + winLength);
+% c = zeros(1, frameCount*increment + winLength);
+
 
 a = .54;
 b = -.46;

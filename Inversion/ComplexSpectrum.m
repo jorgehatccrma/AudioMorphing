@@ -11,7 +11,18 @@ if nargin < 4
 end
 
 inputLength = length(input);
-frameCount = floor((inputLength-winLength)/increment)+1;
+% jorgeh: instead of flooring, shouldn't we zero pad if needed? The way it
+% is, when running the inversion leads to a potentially shorter 
+% reconstructed signals. To fix this we could simply replace:
+frameCount = floor((inputLength-winLength)/increment)+1; 
+% with these 3 lines:
+% zp = rem((inputLength - winLength)/increment,1) * increment;
+% frameCount = ceil((inputLength-winLength)/increment); 
+% if zp > 1; input = [input zeros(1,zp)]; end;
+% 
+%%(NOTE: a change in InvertAndAdd.m is needed if we make this change--look
+%%inside InvertAndAdd.m for the details)
+
 fftLen = 2^(nextpow2(winLength)+1);
 
 a = .54;
