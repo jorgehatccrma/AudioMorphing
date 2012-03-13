@@ -54,7 +54,7 @@ for iter=1:iterations
 	end
 	theErr = sum(sum((abs(spectrum)-abs(lastSpectrum)).^2))/ ...
 		sum(sum(abs(spectrum).^2))*100;
-	fprintf('Error for iteration %d is %g%%.\n', iter, theErr);
+% 	fprintf('Error for iteration %d is %g%%.\n', iter, theErr);
 %	corInvError(iter, c) = theErr;
 %	errorHistory(f) = theErr;
 	lastSpectrum = MatchMagnitudes(spectrum, lastSpectrum);
