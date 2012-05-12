@@ -6,16 +6,7 @@ global s2Mfcc s2Smooth s2PitchSpect
 global s1Spect s2Spect
 global path1 path2
 global frameIncrement windowSize
-global index1 index2
 global final
-
-clear s1pitch
-clear s1PitchSpect
-clear s2PitchSpect
-
-
-% added by jorgeh
-addpath('../Inversion');
 
 if nargin < 3
 	sr = 22050;
@@ -26,38 +17,21 @@ if nargin < 4
 end
 if (size(lambdaList,1) > size(lambdaList,2)) lambdaList = lambdaList'; end
 
-if isstr(lambdaList)
-	if strcmp(lambdaList,'1as2')
-		lambdaList = 1;
-		volumeList = [0;1];
-	elseif strcmp(lambdaList,'2as1')
-		lambdaList = 0;
-		volumeList = [1;0];
-	elseif strcmp(lambdaList,'1')
-		lambdaList = 0;
-		volumeList = [0;1];
-	elseif strcmp(lambdaList,'2')
-		lambdaList = 1;
-		volumeList = [1;0];
-	end
-elseif nargin < 5			% Debugging Feature 
+if nargin < 5				% Debugging Feature 
 	volumeList = [lambdaList;1-lambdaList];
 end
 
-
 windowSize=256;
-frameIncrement=32;
+frameIncrement=64;
 
 % Calculate both pitch signals
 if exist('s1pitch') ~= 1
 	disp('Calculating pitch of s1....');
-	s1pitch=pitchsnake(s1,sr,sr/frameIncrement,100,330);
+	s1pitch=pitchsnake(s1,sr,sr/frameIncrement,100,300);
 	s1width = length(s1pitch);
 	disp('Calculating pitch of s2....');
-	s2pitch=pitchsnake(s2,sr,sr/frameIncrement,100,330);
+	s2pitch=pitchsnake(s2,sr,sr/frameIncrement,100,300);
 	s2width = length(s2pitch);
-else
-	disp('Pitch 1 & 2 already exists and not recalculated.');
 end
 
 if exist('s1PitchSpect') ~= 1
@@ -71,8 +45,6 @@ if exist('s1PitchSpect') ~= 1
 	clear s1Fb
 	clear s1Fbrecon
 %	clear s1Spect
-else
-	disp('MFCC 1 already exists and not recalculated.');
 end
 	
 if 0
@@ -92,8 +64,6 @@ if exist('s2PitchSpect') ~= 1
 	clear s2Fb
 	clear s2Fbrecon
 %	clear s2Spect
-else
-	disp('MFCC 2 already exists and not recalculated.');
 end
 
 if 0
@@ -103,11 +73,9 @@ if 0
 	drawnow;
 end
 
-if exist('path1') ~= 1 | length(path1) < 1
+if exist('path1') ~= 1
 	disp('Calculating dynamic time warping between MFCCs');
 	[error,path1,path2] = dtw(s1Mfcc, s2Mfcc);
-else
-	disp('DTW Path (path1) already exists.  Not recalculating.');
 end
 
 
@@ -161,8 +129,8 @@ for l=1:length(lambdaList);
 		i0=max(1,min(specLength,i0));
 		i1=round(alpha(i)*f/(1 + lambda*(alpha(i) - 1))) + 1;
 		i1=max(1,min(specLength,i1));
-		newPitchSpec = volumeList(1,l)*s2PitchSpect(i1,index2(i)) + ...
-				volumeList(2,l)*s1PitchSpect(i0,index1(i));
+		newPitchSpec = lambda*s2PitchSpect(i1,index2(i)) + ...
+				(1-lambda)*s1PitchSpect(i0,index1(i));
 		
 		if 1
 			s1Warp(:,i) = s1PitchSpect(i0,index1(i));
