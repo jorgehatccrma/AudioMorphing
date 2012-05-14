@@ -1,17 +1,17 @@
 function [y,final] = AudioMorph(s1,s2,sr,lambdaList,volumeList)
-global s1pitch s1width s1mfcc 
-global s2pitch s2width s2mfcc
-global s1Mfcc s1Smooth s1PitchSpect
-global s2Mfcc s2Smooth s2PitchSpect
-global s1Spect s2Spect
-global path1 path2
-global frameIncrement windowSize
-global index1 index2
-global final
-
-clear s1pitch
-clear s1PitchSpect
-clear s2PitchSpect
+% global s1pitch s1width s1mfcc 
+% global s2pitch s2width s2mfcc
+% global s1Mfcc s1Smooth s1PitchSpect
+% global s2Mfcc s2Smooth s2PitchSpect
+% global s1Spect s2Spect
+% global path1 path2
+% global frameIncrement windowSize
+% global index1 index2
+% global final
+% 
+% clear s1pitch
+% clear s1PitchSpect
+% clear s2PitchSpect
 
 
 % added by jorgeh
@@ -48,13 +48,30 @@ end
 windowSize=256;
 frameIncrement=32;
 
+
+% added by jorgeh, to use YIN instead of the missin rabpitch() function
+% for pitch estimation
+yin_params.minf0 = 100;
+yin_params.maxf0 = 300;
+yin_params.hop = frameIncrement;
+yin_params.bufsize = 512; % need to be more than sr/minf0
+yin_params.sr = sr;
+yin_params.wsize = 64; % jorgeh: not sure about this one, but the pitch 
+                        % estimation fails (return NaNs) if I set it to 
+                        % 256 or 512
+
+
 % Calculate both pitch signals
 if exist('s1pitch') ~= 1
 	disp('Calculating pitch of s1....');
-	s1pitch=pitchsnake(s1,sr,sr/frameIncrement,100,330);
-	s1width = length(s1pitch);
+	%s1pitch=pitchsnake(s1,sr,sr/frameIncrement,100,330);
+	yin_s1=yin(s1,yin_params);
+    s1pitch = 440*(2.^(yin_s1.f0));
+    s1width = length(s1pitch);
 	disp('Calculating pitch of s2....');
-	s2pitch=pitchsnake(s2,sr,sr/frameIncrement,100,330);
+	%s2pitch=pitchsnake(s2,sr,sr/frameIncrement,100,330);
+    yin_s2=yin(s2,yin_params);
+    s2pitch = 440*(2.^(yin_s1.f0));
 	s2width = length(s2pitch);
 else
 	disp('Pitch 1 & 2 already exists and not recalculated.');
@@ -64,9 +81,16 @@ if exist('s1PitchSpect') ~= 1
 	disp('Calculating mfcc of s1....');
 	[s1Mfcc,s1Spect,s1Fb, s1Fbrecon, s1Smooth] = ...
 			mfcc2(s1, sr, sr/frameIncrement);
-	s1Mfcc = s1Mfcc(:,1:s1width);
-	s1Smooth = s1Smooth(:,1:s1width);
-	s1Spect = abs(s1Spect(:,1:s1width));
+    % jorgeh: apparenlty pitchsnake used to return less frames than mfcc2,
+    % but YIN returns more
+    if (length(s1pitch) < size(s1Mfcc,2))
+    	s1Mfcc = s1Mfcc(:,1:s1width);
+        s1Smooth = s1Smooth(:,1:s1width);
+        s1Spect = abs(s1Spect(:,1:s1width));
+    else
+        s1width = size(s1Mfcc,2);
+        s1pitch = s1pitch(1:s1width);
+    end
 	s1PitchSpect = s1Spect ./ s1Smooth;
 	clear s1Fb
 	clear s1Fbrecon
@@ -85,9 +109,16 @@ if exist('s2PitchSpect') ~= 1
 	disp('Calculating mfcc of s2....');
 	[s2Mfcc,s2Spect,s2Fb, s2Fbrecon, s2Smooth] = ...
 			mfcc2(s2, sr, sr/frameIncrement);
-	s2Mfcc = s2Mfcc(:,1:s2width);
-	s2Smooth = s2Smooth(:,1:s2width);
-	s2Spect = abs(s2Spect(:,1:s2width));
+    % jorgeh: apparenlty pitchsnake used to return less frames than mfcc2,
+    % but YIN returns more
+    if (s2width < size(s2Mfcc,2))
+    	s2Mfcc = s2Mfcc(:,1:s2width);
+        s2Smooth = s2Smooth(:,1:s2width);
+        s2Spect = abs(s2Spect(:,1:s2width));
+    else
+        s2width = size(s2Mfcc,2);
+        s2pitch = s2pitch(1:s2width);
+    end
 	s2PitchSpect = s2Spect ./ s2Smooth;
 	clear s2Fb
 	clear s2Fbrecon
@@ -237,7 +268,7 @@ if 1
 %		SpectralTilt(s1PitchSpect.*s1Smooth,-1),frameIncrement, ...
 %			windowSize);
 	y = SpectrumInversion(SpectralTilt(final,-1),frameIncrement, ...
-		windowSize);
+		windowSize, 100);
 %	ys2 = SpectrumInversion( ...
 %		SpectralTilt(s2PitchSpect.*s2Smooth,-1),frameIncrement, ...
 %			windowSize);
@@ -270,9 +301,16 @@ if 0
 				% spectrograms.
 	[s1Mfcc,s1Spect,s1Fb, s1Fbrecon, s1Smooth] = ...
 			mfcc2(s1, sr, sr/frameIncrement);
-	s1Mfcc = s1Mfcc(:,1:s1width);
-	s1Smooth = s1Smooth(:,1:s1width);
-	s1Spect = abs(s1Spect(:,1:s1width));
+    % jorgeh: apparenlty pitchsnake used to return less frames than mfcc2,
+    % but YIN returns more
+    if (s1width < size(s1Mfcc,2))
+    	s1Mfcc = s1Mfcc(:,1:s1width);
+        s1Smooth = s1Smooth(:,1:s1width);
+        s1Spect = abs(s1Spect(:,1:s1width));
+    else
+        s1width = size(s1Mfcc,2);
+        s1pitch = s1pitch(1:s1width);
+    end
 	s1PitchSpect = s1Spect ./ s1Smooth;
 	clear s1Fb
 	clear s1Fbrecon

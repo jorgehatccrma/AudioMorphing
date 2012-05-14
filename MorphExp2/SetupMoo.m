@@ -1,0 +1,1 @@
+moo=ReadSound('malcolmspare:moo2.aiff');moo=moo(10001:70000);mymoo=ReadSound('malcolmspare:mymoo.aiff');mymoo=mymoo(10001:60000);

@@ -1,0 +1,1 @@
+kathleen=ReadSound('PowerMalcolm:Desktop Folder:KathleenRaw2.aiff');yellow = kathleen(20000:50000);blue = kathleen(75000:105000);pope = kathleen(130000:160000);morning = kathleen(195000:230000);corner = kathleen(245000:275000);morning2 = kathleen(310000:345000);

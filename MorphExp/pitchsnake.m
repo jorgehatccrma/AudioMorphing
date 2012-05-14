@@ -1,14 +1,5 @@
 function smooth = pitchsnake(signal,sr,fr,low,high);
 
-
-%%%%% HACK BY jorgeh %%%%%%
-smooth = linspace(low, high, floor(fr*length(signal)/sr)-8);
-return
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
 graphPitchSnake = 1;
 maxSnakePoints = 20;
 
